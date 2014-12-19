@@ -1,0 +1,14 @@
+{
+	"name":	"Martin Moeller",
+	"street": "Bahnhofstrasse 4",
+	"postal-code": "04828",
+	"location:": [
+		null,
+		2323.2323,
+		[
+			null,
+			2323.2332,
+			true
+		]
+	]
+}
