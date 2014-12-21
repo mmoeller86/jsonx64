@@ -1,0 +1,15 @@
+Jsonx64 - A fast JSON-parser written in x86-64 assembly
+-------------------------------------------------------
+
+Thanks for downloading jsonx64 from code.google.com.
+This project was created in December 2014.
+
+For compiling jsonx64, type:
+	# make
+
+Jsonx64 shall comply with RFC 4627.
+The project is optimized for speed and memory consumption.
+It supports 64-bit strings, 64-bit memory and 3 input sources: memory, files and FDs.
+
+Regards,
+Martin Moeller
