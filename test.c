@@ -33,6 +33,8 @@ int main (int c, char ** args)
 	int mlen;
 	int i;
 	int fd;
+	FILE * wfile;
+	JSONBuffer * wbuffer;
 
 	setbuf (stdout, NULL);
 	mem = read_file (args [1], &mlen);
@@ -57,7 +59,22 @@ int main (int c, char ** args)
 
 		n = node->a [i];
 		printf ("\t[%d] TYPE=%d NAME=%s\n", i, n->typ, n->nam);
+		printf ("%f\n", n->d_val);
 	}
+
+	/*fd = open ("test2.json", O_RDWR | O_TRUNC | O_CREAT);
+	if (fd == -1) {
+		fprintf (stderr, "%s: %s: Failed to open for writing\n", args [0], "test2.json");
+		return 1;
+	}*/
+
+	//wfile = fopen ("test2.json", "wb");
+	//setbuf (wfile, NULL);
+	fd = open ("test2.json", O_RDWR | O_TRUNC | O_CREAT);
+	wbuffer = json_buffer_init_fd (fd);
+	json_write (wbuffer, node);
+
+	//puts (wbuffer->mem);
 
 	json_parser_free (node);
 	json_buffer_free (buffer);

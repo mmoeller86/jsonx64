@@ -1,7 +1,7 @@
-AR=ar
-CC=cc
+CC=cl
 JWASM=$(HOME)/JWasm211as/jwasm
-JWFLAGS=-zcw -zt0 -elf64 -DELF64
+LIB=lib
+JWFLAGS=-zcw -zt0 -win64 -DWIN64
 
 OBJS=json.o buffer.o node.o str.o array.o write.o
 all: libjsonx64.a test
@@ -25,11 +25,11 @@ write.o: write.asm
 	$(JWASM) $(JWFLAGS) $?
 
 libjsonx64.a: $(OBJS)
-	rm -f $@
-	$(AR) rc $@ $(OBJS)
+	del $@
+	$(LIB) $@ +node.obj
 
-test: libjsonx64.a test.o
-	$(CC) -o $@ test.o libjsonx64.a
+test: jsonx64.lib test.o
+	$(CC) /out:$@ test.o,jsonx64.lib
 
 clean:
-	rm -f test libjsonx64.a *.o *.err
+	rm -f test jsonx64.lib *.o *.err

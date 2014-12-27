@@ -6,127 +6,121 @@
 
 	public json_buffer_init_mem
 	public json_buffer_init_file
+	public json_buffer_init_fd
 	public json_buffer_read_char
 	public json_buffer_peek_char
 	public json_buffer_skip_char
 
-	puts PROTO
 	read PROTO
 	close PROTO
+	fputc PROTO
+	write PROTO
 
 	.code
 
 json_buffer_init_mem PROC
-	push	rdi
-	push	rsi
-	mov	rdi, 1
-	mov	rsi, sizeof JSONBuffer
+	push	arg0
+	push	arg1
+	mov	arg0, 1
+	mov	arg1, sizeof JSONBuffer
 	call	calloc
-	pop	rsi
-	pop	rdi
+	pop	arg1
+	pop	arg0
 
 	test rax, rax
 	jz @1
 
 	mov	[rax + JSONBuffer.typ], TYPE_MEM
-	mov	[rax + JSONBuffer.mem], rdi
-	mov	[rax + JSONBuffer.msize], rsi
+	mov	[rax + JSONBuffer.mem], arg0
+	mov	[rax + JSONBuffer.msize], arg1
 	mov	[rax + JSONBuffer.last_char], -1
 @1:	ret
 json_buffer_init_mem ENDP
 
 json_buffer_init_file PROC
-	push	rdi
-	mov	rdi, 1
-	mov	rsi, sizeof JSONBuffer
+	push	arg0
+	mov	arg0, 1
+	mov	arg1, sizeof JSONBuffer
 	call	calloc
-	pop	rdi
+	pop	arg0
 	
 	test rax, rax
 	jz @1
 
 	mov	[rax + JSONBuffer.typ], TYPE_FILE
-	mov	[rax + JSONBuffer.file], rdi
+	mov	[rax + JSONBuffer.file], arg0
 	mov	[rax + JSONBuffer.last_char], -1
 @1:	ret
 json_buffer_init_file ENDP
 
 json_buffer_init_fd PROC
-	push	rdi
-	mov	rdi, 1
-	mov	rsi, sizeof JSONBuffer
+	push	arg0
+	mov	arg0, 1
+	mov	arg1, sizeof JSONBuffer
 	call	calloc
-	pop	rdi
+	pop	arg0
 	
 	test rax, rax
 	jz @1
 
 	mov	[rax + JSONBuffer.typ], TYPE_FD
-	mov	[rax + JSONBuffer.fd], edi
+	mov	[rax + JSONBuffer.fd], arg0d
 	mov	[rax + JSONBuffer.last_char], -1
 @1:	ret
 json_buffer_init_fd ENDP
 
 json_buffer_free PROC
-	push	rdi
-	.if [rdi + JSONBuffer.typ] == TYPE_MEM
-		mov	rdi, [rdi + JSONBuffer.mem]
+	push	arg0
+	.if [arg0 + JSONBuffer.typ] == TYPE_MEM
+		mov	arg0, [arg0 + JSONBuffer.mem]
 		call	free
-	.elseif [rdi + JSONBuffer.typ] == TYPE_FILE
-		mov	rdi, [rdi + JSONBuffer.file]
+	.elseif [arg0 + JSONBuffer.typ] == TYPE_FILE
+		mov	arg0, [arg0 + JSONBuffer.file]
 		call fclose
 	.else
-		mov	edi, [rdi + JSONBuffer.fd]
+		mov	arg0d, [arg0 + JSONBuffer.fd]
 		call	close
 	.endif
-	pop	rdi
 
+	pop	arg0
 	call	free
 	ret
 json_buffer_free ENDP
 
-	.data
-msg_read_char	db 'read-char', 0
-msg_peek_char	db 'peek-char', 0
-
-	.code
 json_buffer_read_char PROC p: Ptr JSONBuffer
 	LOCAL cha: BYTE
-
-	mov	rdi, offset msg_read_char
-	call	puts
 
 	mov	rax, p
 	cmp	[rax + JSONBuffer.last_char], -1
 	je	@3
 
-	mov	rdi, [rax + JSONBuffer.last_char]
+	mov	rdx, [rax + JSONBuffer.last_char]
 	mov	[rax + JSONBuffer.last_char], -1
-	mov	rax, rdi
+	mov	rax, rdx
 	jmp	@4
 
 @3:
 	.if [rax + JSONBuffer.typ] == TYPE_MEM
-		mov rdi, [rax + JSONBuffer.msize]
-		.if rdi == [rax + JSONBuffer.mpos]
+		mov rdx, [rax + JSONBuffer.msize]
+		.if rdx == [rax + JSONBuffer.mpos]
 			mov rax, -1
 		@1:	stc
 			ret
 		.endif
 
-		mov	rdi, [rax + JSONBuffer.mem]
-		add	rdi, [rax + JSONBuffer.mpos]
+		mov	rdx, [rax + JSONBuffer.mem]
+		add	rdx, [rax + JSONBuffer.mpos]
 		inc	[rax + JSONBuffer.mpos]
-		movsx	rax, byte ptr [rdi]
+		movsx	rax, byte ptr [rdx]
 	.elseif [rax + JSONBuffer.typ] == TYPE_FILE
-		mov	rdi, [rax + JSONBuffer.file]
+		mov	arg0, [rax + JSONBuffer.file]
 		call	fgetc
 		cmp eax, -1
 		je @1
 	.else
-		mov	edi, [rax + JSONBuffer.fd]
-		lea	rsi, cha
-		mov	rdx, 1
+		mov	arg0d, [rax + JSONBuffer.fd]
+		lea	arg1, cha
+		mov	arg2, 1
 		call	read
 		cmp	eax, 0
 		jl	@1
@@ -134,17 +128,14 @@ json_buffer_read_char PROC p: Ptr JSONBuffer
 		movsx	rax, cha
 	.endif
 
-@2:	mov	rdi, p
-	mov	[rdi + JSONBuffer.last_char], -1
+@2:	mov	rdx, p
+	mov	[rdx + JSONBuffer.last_char], -1
 @4:	clc
 	ret
 json_buffer_read_char ENDP
 
 json_buffer_peek_char PROC p: Ptr JSONBuffer
 	LOCAL cha: BYTE
-
-	mov	rdi, offset msg_peek_char
-	call	puts
 
 	mov	rax, p
 	cmp	[rax + JSONBuffer.last_char], -1
@@ -155,34 +146,34 @@ json_buffer_peek_char PROC p: Ptr JSONBuffer
 
 @2:
 	.if [rax + JSONBuffer.typ] == TYPE_MEM
-		mov rdi, [rax + JSONBuffer.msize]
-		.if rdi == [rax + JSONBuffer.mpos]
+		mov rdx, [rax + JSONBuffer.msize]
+		.if rdx == [rax + JSONBuffer.mpos]
 			mov rax, -1
 		@1:	stc
 			ret
 		.endif
 
-		mov	rdi, [rax + JSONBuffer.mem]
-		add	rdi, [rax + JSONBuffer.mpos]
+		mov	rdx, [rax + JSONBuffer.mem]
+		add	rdx, [rax + JSONBuffer.mpos]
 		inc	[rax + JSONBuffer.mpos]
-		movsx	rax, byte ptr [rdi]
+		movsx	rax, byte ptr [rdx]
 	.elseif [rax + JSONBuffer.typ] == TYPE_FILE
-		mov	rdi, [rax + JSONBuffer.file]
+		mov	arg0, [rax + JSONBuffer.file]
 		call	fgetc
 		cmp eax, -1
 		je @1
 	.else
-		mov	edi, [rax + JSONBuffer.fd]
-		lea	rsi, cha
-		mov	rdx, 1
+		mov	arg0d, [rax + JSONBuffer.fd]
+		lea	arg1, cha
+		mov	arg2, 1
 		call	read
 
 		movsx	rax, cha
 	.endif
 
-@3:	mov	rdi, p
-	mov	[rdi + JSONBuffer.last_char], 0
-	mov	byte ptr [rdi + JSONBuffer.last_char], al
+@3:	mov	rdx, p
+	mov	[rdx + JSONBuffer.last_char], 0
+	mov	byte ptr [rdx + JSONBuffer.last_char], al
 @4:	clc
 	ret
 json_buffer_peek_char ENDP
@@ -201,21 +192,76 @@ json_buffer_skip_char PROC p: Ptr JSONBuffer
 	.if [rax + JSONBuffer.typ] == TYPE_MEM
 		inc	[rax + JSONBuffer.mpos]
 	.elseif [rax + JSONBuffer.typ] == TYPE_FILE
-		mov	rdi, [rax + JSONBuffer.file]
-		mov	rsi, 1
-		mov	edx, SEEK_CUR
+		mov	arg0, [rax + JSONBuffer.file]
+		mov	arg1, 1
+		mov	arg2d, SEEK_CUR
 		call fseek
 	.else
-		mov	edi, [rax + JSONBuffer.fd]
-		lea	rsi, cha
-		mov	rdx, 1
+		mov	arg0d, [rax + JSONBuffer.fd]
+		lea	arg1, cha
+		mov	arg2, 1
 		call	read
 	.endif
 
-	mov	rdi, p
-	mov	[rdi + JSONBuffer.last_char], -1
+	mov	rdx, p
+	mov	[rdx + JSONBuffer.last_char], -1
 @2:	clc
 	ret
 json_buffer_skip_char ENDP
+
+json_buffer_write_char PROC buffer: Ptr JSONBuffer, cha: QWORD
+	mov	rax, buffer
+	.if [rax + JSONBuffer.typ] == TYPE_MEM
+		mov	arg0, [rax + JSONBuffer.mem]
+		inc	[rax + JSONBuffer.msize]
+		mov	arg1, [rax + JSONBuffer.msize]
+		call	realloc
+		test	rax, rax
+		jz	@1
+
+		mov	rdx, rax
+		mov	rax, buffer
+		mov	rcx, [rax + JSONBuffer.msize]
+		mov	al, byte ptr [cha]
+		mov	[rdx + rcx -2], al
+		mov	byte ptr [rdx + rcx -1], 0
+
+		mov	rax, buffer
+		mov	[rax + JSONBuffer.mem], rdx
+		jmp	@2
+	.elseif [rax + JSONBuffer.typ] == TYPE_FILE
+		mov	arg0d, dword ptr [cha]
+		mov	arg1, [rax + JSONBuffer.file]
+		call	fputc
+		cmp	eax, -1
+		je	@1
+		jmp	@2
+	.else
+		mov	arg0d, [rax + JSONBuffer.fd]
+		lea	arg1, cha
+		mov	arg2, 1
+		call	write
+		cmp	eax, 1
+		jl	@1
+		jmp	@2
+	.endif
+
+@1:	stc
+	ret
+
+@2:	clc
+	ret
+json_buffer_write_char ENDP
+
+json_buffer_write_tab PROC buffer: Ptr JSONBuffer, n: QWORD
+@1:	cmp	n, 0
+	je	@2
+
+	invoke	json_buffer_write_char, buffer, 9
+	dec	n
+	jmp	@1
+
+@2:	ret
+json_buffer_write_tab ENDP
 
 	END

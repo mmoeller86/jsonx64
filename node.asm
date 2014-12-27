@@ -10,8 +10,8 @@
 
 	.code
 json_node_alloc PROC
-	mov	rdi, 1
-	mov	rsi, sizeof JSONNode
+	mov	arg0, 1
+	mov	arg1, sizeof JSONNode
 	call	calloc
 	ret
 json_node_alloc ENDP
@@ -19,11 +19,10 @@ json_node_alloc ENDP
 json_node_free PROC node: Ptr JSONNode
 	LOCAL array: Ptr Ptr JSONNode
 
-	ret
 	mov rax, node
 	mov array, 0
 	.if [rax + JSONNode.d_str] != 0
-		mov	rdi, [rax + JSONNode.d_str]
+		mov	arg0, [rax + JSONNode.d_str]
 		call	free
 	.elseif [rax + JSONNode.a] != 0
 		mov rax, [rax + JSONNode.a]
@@ -45,15 +44,15 @@ json_node_free PROC node: Ptr JSONNode
 		loop @1
 	.endif
 
-	mov	rdi, node
+	mov	arg0, node
 	call	free
 	ret
 json_node_free ENDP
 
 json_node_set_name PROC node: Ptr JSONNode, nam: Ptr BYTE
 	mov rax, node
-	mov rdi, nam
-	mov [rax + JSONNode.nam], rdi
+	mov rdx, nam
+	mov [rax + JSONNode.nam], rdx
 	ret
 json_node_set_name ENDP
 

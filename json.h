@@ -45,6 +45,7 @@ JSONBuffer * json_buffer_init_fd (int fd);
 void	     json_buffer_free (JSONBuffer * buffer);
 
 JSONNode *	json_parse (JSONBuffer * buffer);
+int		json_write (JSONBuffer * buffer, JSONNode * node);
 void		json_parser_free (JSONNode * root);
 
 #endif

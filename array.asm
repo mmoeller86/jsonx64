@@ -9,25 +9,25 @@
 
 	.code
 json_array_add PROC array: Ptr, len: Ptr, el: Ptr
-	mov	rdi, array
-	mov	rdi, [rdi]
+	mov	arg0, array
+	mov	arg0, [arg0]
 	mov	rcx, len
 	mov	rcx, [rcx]
 	inc	rcx
-	mov	rsi, rcx
-	shl	rsi, 3
+	mov	arg1, rcx
+	shl	arg1, 3
 	push	rcx
 	call	realloc
 	pop	rcx
 	test	rax, rax
 	jz	@1
 
-	mov	rdi, rax
+	mov	rdx, rax
 	mov	rax, el
-	mov	[rdi + rcx*8 -8], rax
+	mov	[rdx + rcx*8 -8], rax
 
 	mov	rax, array
-	mov	[rax], rdi
+	mov	[rax], rdx
 	mov	rax, len
 	mov	[rax], rcx
 	clc

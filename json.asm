@@ -20,7 +20,7 @@ json_init PROC
 json_init ENDP
 
 json_fini PROC p: Ptr JSONParser
-	mov	rdi, p
+	mov	arg0, p
 	call	free
 	ret
 json_fini ENDP
@@ -63,7 +63,8 @@ json_parse_string PROC buffer: Ptr JSONBuffer
 
 	invoke	json_buffer_skip_char, buffer
 
-	mov	buf, 0
+	invoke	json_str_alloc
+	mov	buf, rax
 	mov	len, 1
 @1:	invoke	json_buffer_read_char, buffer
 
@@ -92,9 +93,9 @@ json_parse_string PROC buffer: Ptr JSONBuffer
 	mov	hex [3], al
 	mov	hex [4], 0
 
-	lea	rdi, hex
-	mov	rsi, 0
-	mov	edx, 16
+	lea	arg0, hex
+	mov	arg1, 0
+	mov	arg2d, 16
 	call	strtoul
 
 	cmp	eax, 256
@@ -165,9 +166,9 @@ json_parse_str PROC node: Ptr JSONNode, buffer: Ptr JSONBuffer
 	invoke json_parse_string, buffer
 	jc	@1
 
-	mov	rdi, node
-	mov	[rdi + JSONNode.d_str], rax
-	mov	[rdi + JSONNode.typ], NODE_TYPE_STRING
+	mov	rdx, node
+	mov	[rdx + JSONNode.d_str], rax
+	mov	[rdx + JSONNode.typ], NODE_TYPE_STRING
 	clc
 @1:	ret
 json_parse_str ENDP
@@ -178,30 +179,30 @@ b_false	db 'false', 0
 
 	.code
 json_parse_boolean PROC node: Ptr JSONNode, stri: Ptr BYTE
-	mov	rdi, stri
-	mov	rsi, offset b_true
+	mov	arg0, stri
+	mov	arg1, offset b_true
 	call	strcasecmp
 	.if eax == 0
-		mov	rdi, node
-		mov	[rdi + JSONNode.d_bool], 1
-		mov	[rdi + JSONNode.typ], NODE_TYPE_BOOLEAN
+		mov	rdx, node
+		mov	[rdx + JSONNode.d_bool], 1
+		mov	[rdx + JSONNode.typ], NODE_TYPE_BOOLEAN
 		jmp	@2
 	.endif
 
-	mov	rdi, stri
-	mov	rsi, offset b_false
+	mov	arg0, stri
+	mov	arg1, offset b_false
 	call	strcasecmp
 	.if eax == 0
-		mov	rdi, node
-		mov	[rdi + JSONNode.d_bool], 0
-		mov	[rdi + JSONNode.typ], NODE_TYPE_BOOLEAN
+		mov	rdx, node
+		mov	[rdx + JSONNode.d_bool], 0
+		mov	[rdx + JSONNode.typ], NODE_TYPE_BOOLEAN
 		jmp	@2
 	.endif
 
 @1:	stc
 	ret
 
-@2:	mov	rdi, stri
+@2:	mov	arg0, stri
 	call	free
 	clc
 	ret
@@ -210,8 +211,8 @@ json_parse_boolean ENDP
 json_parse_num PROC node: Ptr JSONNode, stri: Ptr BYTE
 	LOCAL ende: QWORD
 
-	mov	rdi, stri
-	lea	rsi, ende
+	mov	arg0, stri
+	lea	arg1, ende
 	call	strtod
 
 	mov	rax, stri
@@ -221,7 +222,7 @@ json_parse_num PROC node: Ptr JSONNode, stri: Ptr BYTE
 	.endif
 
 	mov	r8, node
-	movq	[r8 + JSONNode.d_num], mm0
+	movq	[r8 + JSONNode.d_num], xmm0
 	mov	[r8 + JSONNode.typ], NODE_TYPE_NUMBER
 	clc
 	ret
@@ -254,10 +255,10 @@ json_parse_object PROC node: Ptr JSONNode, buffer: Ptr JSONBuffer
 	jmp	@1
 
 @2:	mov	rax, node
-	mov	rdi, array
-	mov	[rax + JSONNode.a], rdi
-	mov	rdi, n
-	mov	[rax + JSONNode.n], rdi
+	mov	rdx, array
+	mov	[rax + JSONNode.a], rdx
+	mov	rdx, n
+	mov	[rax + JSONNode.n], rdx
 	mov	[rax + JSONNode.typ], NODE_TYPE_OBJECT
 	clc
 	ret
@@ -301,10 +302,10 @@ json_parse_array PROC node: Ptr JSONNode, buffer: Ptr JSONBuffer
 	jmp	@1
 
 @2:	mov	rax, node
-	mov	rdi, array
-	mov	[rax + JSONNode.a], rdi
-	mov	rdi, n
-	mov	[rax + JSONNode.n], rdi
+	mov	rdx, array
+	mov	[rax + JSONNode.a], rdx
+	mov	rdx, n
+	mov	[rax + JSONNode.n], rdx
 	mov	[rax + JSONNode.typ], NODE_TYPE_ARRAY
 	clc
 	ret
@@ -372,16 +373,16 @@ json_get_str PROC buffer: Ptr JSONBuffer
 
 	push	rax
 	inc	len
-	mov	rdi, buf
-	mov	rsi, len
+	mov	arg0, buf
+	mov	arg1, len
 	call	realloc
 
 	mov	buf, rax
 	pop	rax
-	mov	rdi, buf
-	mov	rsi, len
-	mov	[rdi + rsi -2], al
-	mov	byte ptr [rdi + rsi -1], 0
+	mov	rdx, buf
+	mov	r8, len
+	mov	[rdx + r8 -2], al
+	mov	byte ptr [rdx + r8 -1], 0
 
 	invoke	json_buffer_skip_char, buffer
 	jmp	@1
@@ -396,8 +397,8 @@ d_null		db 'null', 0
 
 	.code
 json_parse_null PROC node: Ptr JSONNode, stri: Ptr BYTE
-	mov	rdi, stri
-	mov	rsi, offset d_null
+	mov	arg0, stri
+	mov	arg1, offset d_null
 	call	strcasecmp
 	test	eax, eax
 	jnz	@1
@@ -405,7 +406,7 @@ json_parse_null PROC node: Ptr JSONNode, stri: Ptr BYTE
 	mov	rax, node
 	mov	[rax + JSONNode.typ], NODE_TYPE_NULL
 
-	mov	rdi, stri
+	mov	arg0, stri
 	call	free
 	clc
 	ret
@@ -463,7 +464,7 @@ json_parse_node_val ENDP
 json_parse PROC
 	LOCAL	buffer: Ptr
 
-	mov	buffer, rdi
+	mov	buffer, arg0
 	invoke	json_node_alloc
 	test	rax, rax
 	jz	@1
@@ -473,7 +474,7 @@ json_parse PROC
 json_parse ENDP
 
 json_parser_free PROC
-	invoke	json_node_free, rdi
+	invoke	json_node_free, arg0
 	ret
 json_parser_free ENDP
 

@@ -1,5 +1,8 @@
+	include system.inc
+
 	JSONParser STRUC
 	JSONParser ENDS
+
 
 TYPE_MEM	equ	0
 TYPE_FILE	equ	1
@@ -54,6 +57,9 @@ SEEK_END	equ 2
 	json_buffer_read_char PROTO buffer: Ptr JSONBuffer
 	json_buffer_peek_char PROTO buffer: Ptr JSONBuffer
 	json_buffer_skip_char PROTO buffer: Ptr JSONBuffer
+	json_buffer_write_char PROTO buffer: Ptr JSONBuffer, cha: QWORD
+	json_buffer_write_str PROTO buffer: Ptr JSONBuffer, stri: Ptr BYTE
+	json_buffer_write_tab PROTO buffer: Ptr JSONBuffer, n: QWORD
 
 	; Node Procedures
 	json_node_alloc PROTO

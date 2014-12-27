@@ -2,6 +2,7 @@
 	"name":	"Martin Moeller",
 	"street": "Bahnhofstrasse 4",
 	"postal-code": "04828",
+	"test" : 23.23,
 	"location:": [
 		null,
 		2323.2323,

@@ -1,0 +1,21 @@
+Version 0.3
+-----------
+
+	o switch from JWASM to FASM (flat assembler)
+
+Version 0.2
+-----------
+
+	o Fixed floating-point register problem
+	o Fixed string allocation error in json.asm
+	o Added support for win64 targets
+	o Merged elf64 and win64 targets in one branch, because of easier
+	  code maintenance
+	o Writing support
+
+Version 0.1
+-----------
+
+	o Initial Release
+	o parsing-only support
+	o Uses JWASM-assembler
