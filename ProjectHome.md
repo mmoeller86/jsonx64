@@ -1,0 +1,1 @@
+Jsonx64 provides functions Form effeciently parsing JSON-Files. The library is tuned for speed. Ist kompletely Seiten in c86-64 assembly.
